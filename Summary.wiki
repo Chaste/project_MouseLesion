@@ -4,11 +4,11 @@ projects/MouseLesion/Summary.wiki
 edit that file, don't edit this page on trac!
 }}}
 
-=  =
+= Electrotonic conduction across non-myocyte lesions requires Cx43 =
 
 Welcome to the Chaste wiki.
 
-This section contains pages generated automatically from the source code accompanying Capel et al. (2014).
+This section contains pages generated automatically from the source code accompanying Mahoney et al. (2015).
 
 Before running these examples you will need to [wiki:InstallGuides/InstallGuide install Chaste's dependencies] and the [http://www.cs.ox.ac.uk/chaste/download.html source code for version 3.3].
 The easiest way to do this is using an Ubuntu machine (or an Ubuntu virtual machine) as discussed on InstallGuides/UbuntuPackage.
@@ -32,7 +32,7 @@ If you wish to install Chaste direct from our repository, you may do so from the
 svn checkout https://chaste.cs.ox.ac.uk/svn/chaste/trunk Chaste
 cd <path to Chaste source>/projects
 }}}
-(replacing "`<path to Chaste source>`" with the filepath to where you have installed Chaste. 
+(replacing "`<path to Chaste source>`" with the filepath to where you have installed Chaste). 
 Now unzip the downloaded `MouseLesion.tar.gz` into this folder.
 
 To run the simulations, use:

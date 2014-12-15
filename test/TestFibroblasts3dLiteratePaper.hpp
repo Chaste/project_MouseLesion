@@ -36,6 +36,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TESTFIBROBLASTS3D_HPP_
 #define TESTFIBROBLASTS3D_HPP_
 
+/*
+ * = Three dimensional mouse ventricle with lesion simulation =
+ *
+ * This is the code that was used to perform the simulation in Mahoney ''et al.'' (2015).
+ *
+ * == Code Walkthrough ==
+ */
+
 #include <cxxtest/TestSuite.h>
 
 /*

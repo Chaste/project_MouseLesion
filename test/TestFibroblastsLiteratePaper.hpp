@@ -36,6 +36,14 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef TESTFIBROBLASTS_HPP_
 #define TESTFIBROBLASTS_HPP_
 
+/*
+ * = Two dimensional mouse ventricle with lesion simulation =
+ *
+ * This is the code that was used to perform the simulation in Mahoney ''et al.'' (2015).
+ *
+ * == Code Walkthrough ==
+ */
+
 #include <cxxtest/TestSuite.h>
 
 /*
