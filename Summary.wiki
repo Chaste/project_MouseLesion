@@ -1,0 +1,43 @@
+{{{#!comment
+This wiki page is auto-generated from the file
+projects/MouseLesion/Summary.wiki
+edit that file, don't edit this page on trac!
+}}}
+
+=  =
+
+Welcome to the Chaste wiki.
+
+This section contains pages generated automatically from the source code accompanying Capel et al. (2014).
+
+Before running these examples you will need to [wiki:InstallGuides/InstallGuide install Chaste's dependencies] and the [http://www.cs.ox.ac.uk/chaste/download.html source code for version 3.3].
+The easiest way to do this is using an Ubuntu machine (or an Ubuntu virtual machine) as discussed on InstallGuides/UbuntuPackage.
+Note that cardiac Chaste is not supported on Windows, so users of Windows will need to follow the virtual machine route.
+For manual installation of each dependency, on any version of Linux, see DeveloperInstallGuide.
+
+The simulations featured in the paper supplement are explained and annotated below.
+For further information on using Chaste to solve these and related problems, see our [wiki:ChasteGuides extensive guide material].
+
+== Mouse Lesion study ==
+
+The steps required to reproduce the study are:
+ 1. Run a simulation of a 2D lesion, with varying command line parameters ([wiki:./Fibroblasts C++ file for performing simulation])
+ 1. Run a simulation of a 3D lesion, with varying command line parameters ([wiki:./Fibroblasts3d C++ file for performing simulation])
+  
+== Sample commands to install and run everything ==
+
+If you wish to install Chaste direct from our repository, you may do so from the command line as follows:
+{{{
+#!sh
+svn checkout https://chaste.cs.ox.ac.uk/svn/chaste/trunk Chaste
+cd <path to Chaste source>/projects
+}}}
+(replacing "`<path to Chaste source>`" with the filepath to where you have installed Chaste. 
+Now unzip the downloaded `MouseLesion.tar.gz` into this folder.
+
+To run the simulations, use:
+{{{
+#!sh
+cd <path to Chaste source>
+scons chaste_libs=1 brief=1 build=GccOptNative projects/MouseLesion
+}}}
