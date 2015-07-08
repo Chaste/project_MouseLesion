@@ -41,3 +41,5 @@ To run the simulations, use:
 cd <path to Chaste source>
 scons chaste_libs=1 brief=1 build=GccOptNative projects/MouseLesion
 }}}
+
+To run simulations for the parameters and results shown in the paper, use the script `run_lesion_simulations.sh` and then (when they have finished) `collate_lesion_results.sh`, followed by the matlab script `test/data/processing_scripts/process_APs_capacitance.m`.

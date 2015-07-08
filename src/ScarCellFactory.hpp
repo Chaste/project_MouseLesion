@@ -140,19 +140,19 @@ public:
       mTopOfLeftTissue(UNSIGNED_UNSET, DBL_MAX),
       mBaseTissue(UNSIGNED_UNSET, DBL_MAX)
     {
-    	// Get the cell model to a sensible steady state before we start.
-    	// (NB We need a stimulus that is much smaller magnitude to stop it blowing up the cells)
-    	boost::shared_ptr<AbstractIvpOdeSolver> p_empty_solver;
-    	boost::shared_ptr<AbstractStimulusFunction> p_single_cell_stim(new RegularStimulus(-50.0, 2, rPeriod, 10));
-    	boost::shared_ptr<AbstractCvodeCell> p_cell(new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, p_single_cell_stim));
+        // Get the cell model to a sensible steady state before we start.
+        // (NB We need a stimulus that is much smaller magnitude to stop it blowing up the cells)
+        boost::shared_ptr<AbstractIvpOdeSolver> p_empty_solver;
+        boost::shared_ptr<AbstractStimulusFunction> p_single_cell_stim(new RegularStimulus(-50.0, 2, rPeriod, 10));
+        boost::shared_ptr<AbstractCvodeCell> p_cell(new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, p_single_cell_stim));
         p_cell->SetParameter("membrane_non_inactivating_steady_state_potassium_current_conductance", 0.0);
 
         std::cout << "Running AP model to initial steady state...";
-    	SteadyStateRunner steady_runner(p_cell);
-    	steady_runner.RunToSteadyState();
-    	std::cout << "done!" << std::endl << std::flush;
+        SteadyStateRunner steady_runner(p_cell);
+        steady_runner.RunToSteadyState();
+        std::cout << "done!" << std::endl << std::flush;
 
-    	CopyToStdVector(p_cell->rGetStateVariables(),mCellModelICs);
+        CopyToStdVector(p_cell->rGetStateVariables(),mCellModelICs);
     }
 
     AbstractCardiacCellInterface* CreateCardiacCellForTissueNode(Node<DIM>* pNode)

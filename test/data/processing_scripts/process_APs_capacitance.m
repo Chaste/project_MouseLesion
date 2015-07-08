@@ -15,11 +15,7 @@
 close all
 clear all
 
-%%
-% A script to process some of the results from pilot sims
-
 %% Now load from central node in neutral cells with altered capacitance
-
 conductivities = [0.1];
 %neutral_capacitances = [1; 0.1; 0.01; 0.001; 0.0001];
 neutral_capacitances = [1; 0.1; 0.01; 0.001];
@@ -35,7 +31,7 @@ for t = 1:length(cell_types)
         
         % This is from a simulation with myocytes everywhere and no change to
         % conductivity etc.
-        data = load('results_capacitance/Myocyte_scar_cond_1_cap_1_boundary_cond_1_period_150_end_150.dat');
+        data = load('../results_capacitance/Myocyte_scar_cond_1_cap_1_boundary_cond_1_period_150_end_150.dat');
         times = data(:,1) - 5;
         
         a = figure;
@@ -48,7 +44,7 @@ for t = 1:length(cell_types)
         
         for i=1:length(neutral_capacitances)
             figure(a)
-            data = load(['results_capacitance/' cell_types{t}  '_scar_cond_' num2str(conductivities(c))...
+            data = load(['../results_capacitance/' cell_types{t}  '_scar_cond_' num2str(conductivities(c))...
                 '_cap_' num2str(neutral_capacitances(i)) '_boundary_cond_1_period_150_end_150.dat']);
             plot(times, data(:,index_scar+2))
             legend_entries = {legend_entries{:} [cell_types{t} ' p =  ' num2str(conductivities(c)/neutral_capacitances(i))] };
@@ -90,12 +86,12 @@ for t = 1:length(cell_types)
         % The initial scar is same as zero conductivty from:
         
         for i=1:length(neutral_capacitances)
-            recovering = importdata(['results_capacitance/' cell_types{t} '_scar_cond_' num2str(conductivities(c))...
+            recovering = importdata(['../results_capacitance/' cell_types{t} '_scar_cond_' num2str(conductivities(c))...
                 '_cap_' num2str(neutral_capacitances(i)) '_boundary_cond_1_period_150_end_150_APs.dat']);
             
             % The scar region in early recovery - let's say conductance is
             % 0.001
-            early = importdata(['results_capacitance/' cell_types{t} '_scar_cond_0.001_cap_1_boundary_cond_1_period_150_end_150_APs.dat']);
+            early = importdata(['../results_capacitance/' cell_types{t} '_scar_cond_0.001_cap_1_boundary_cond_1_period_150_end_150_APs.dat']);
             
             % Plus ones to go from C to matlab indexing
             full_data = [early.data([index_tissue+1 index_scar+1],:); ...

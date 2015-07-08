@@ -39,8 +39,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "AbstractConductivityModifier.hpp"
 #include "ScarCellFactory.hpp"
 
-#ifdef CHASTE_CVODE
-
 /**
  * This is a special conductivity modifier class, which is the easiest way to get
  * complicated variation in conductivity throughout the tissue.
@@ -96,15 +94,15 @@ public:
      * @param cutActive  Whether to introduce a cut
      */
     ScarConductivityModifier(AbstractTetrahedralMesh<DIM,DIM>* pMesh,
-                            ScarShape shape,
-                            double regionWidth,
-                            double scarRadius,
-                            double scarScaling,
-                            double chiScaling,
-                            double boundaryWidth,
-                            double boundaryScaling,
-                            bool scarActive,
-                            bool cutActive)
+                             ScarShape shape,
+                             double regionWidth,
+                             double scarRadius,
+                             double scarScaling,
+                             double chiScaling,
+                             double boundaryWidth,
+                             double boundaryScaling,
+                             bool scarActive,
+                             bool cutActive)
         : AbstractConductivityModifier<DIM,DIM>(),
           mpMesh(pMesh),
           mShape(shape),
@@ -166,12 +164,12 @@ public:
 
         if (inside_scar && intracellular)
         {
-        	mReturnTensor = rOriginalConductivity;
-        	if (intracellular)
-        	{
-        		mReturnTensor *= mScarScaling;
-        	}
-        	mReturnTensor /= mScarChiScaling;
+            mReturnTensor = rOriginalConductivity;
+            if (intracellular)
+            {
+                mReturnTensor *= mScarScaling;
+            }
+            mReturnTensor /= mScarChiScaling;
             return mReturnTensor;
         }
         else if ( mCutApplied && ((x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) < mCutWidth*mCutWidth) )
@@ -181,7 +179,7 @@ public:
         }
         else if (inside_boundary && intracellular)
         {
-        	mReturnTensor = rOriginalConductivity*mBoundaryScaling;
+            mReturnTensor = rOriginalConductivity*mBoundaryScaling;
             return mReturnTensor;
         }
         else
@@ -193,5 +191,5 @@ public:
     }
 };
 
-#endif // CHASTE_CVODE
+
 #endif // SCARCONDUCTIVTYMODIFIER_HPP_
