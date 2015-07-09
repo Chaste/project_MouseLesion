@@ -83,18 +83,19 @@ public:
                     " Mandatory:\n"
                     " * --scar-conduction-scaling <x> The proportion of the intra-cellular conduction to\n"
                     "                                 apply in the central scar region.\n"
-                    " * --boundary-conduction-scaling <x> The proportion of intra-cellular conduction to\n"
-                    "                                     apply in the boundary of the scar (myocytes).\n"
                     "\n"
                     " Optional:\n"
                     " * --use-neutral-cells <true or false>  Whether to use neutral cells OR,\n"
                     " * --use-fibroblasts <true or false>    a fibroblast electrophysiology model,\n"
                     "                                        in the scar region.\n"
                     " * --scar-membrane-area-scaling <x> the scaling factor for membrane area (per unit vol) in scar region\n"
+                    " * --boundary-conduction-scaling <x> The proportion of intra-cellular conduction to\n"
+                    "                                     apply in the boundary of the scar (still myocytes).\n"
                     " * --scar-shape <x> Whether the scar should be a 'CIRCLE' or a 'SQUARE'\n"
                     "\n"
-                    " * --pacing-period <x>  The time between paces applied on x=0 (defaults to 150ms)\n"
+                    " * --pacing-period <x>  The time between paces applied on x=0 (defaults to 100ms)\n"
                     " * --end-time <x>       How long to perform the simulation for (defaults to pacing period).\n"
+                    " * --lesion-pacing      Whether to perform pacing in the centre of the lesion (default false).\n"
             		" * --cut  Whether to introduce a cut with complete conduction block (defaults to false).\n";
             return;
         }
@@ -104,9 +105,10 @@ public:
          *
          * These are the defaults.
          */
-        double pacing_cycle_length = 150;
+        double pacing_cycle_length = 100;
         bool use_neutral_cell_model = false;
         bool use_fibroblasts = false;
+        bool lesion_pacing = false; // Alternative is remote/sinus pacing.
         ScarShape shape = CIRCLE;
         double scar_membrane_area_scaling = 1.0;
         const std::string output_folder = "FibroblastSims/";
@@ -150,16 +152,13 @@ public:
         {
             EXCEPTION("Please provide the command line option '--scar-conduction-scaling' with a value between 0 and 1.");
         }
-        double scaling_factor_boundary;
+
+        double scaling_factor_boundary = 1.0;
         if (CommandLineArguments::Instance()->OptionExists("--boundary-conduction-scaling"))
         {
             scaling_factor_boundary = CommandLineArguments::Instance()->GetDoubleCorrespondingToOption("--boundary-conduction-scaling");
             assert(scaling_factor_boundary >= 0.0);
             assert(scaling_factor_boundary <= 1.0);
-        }
-        else
-        {
-            EXCEPTION("Please provide the command line option '--boundary-conduction-scaling' with a value between 0 and 1.");
         }
 
         // And decide whether to use a neutral cell model, or normal mytocytes.
@@ -190,6 +189,11 @@ public:
             create_cut = true;
         }
 
+        if (CommandLineArguments::Instance()->OptionExists("--lesion-pacing"))
+        {
+            lesion_pacing = true;
+        }
+
         // Set up a unique output folder for these options
         std::stringstream sub_directory;
         if (use_neutral_cell_model)
@@ -215,6 +219,11 @@ public:
         if (create_cut)
         {
             sub_directory << "_WithCut";
+        }
+
+        if (lesion_pacing)
+        {
+            sub_directory << "_LesionPacing";
         }
 
         /**
@@ -258,9 +267,11 @@ public:
         ScarCellFactory<2> cell_factory(mRegionWidth,
                                         mScarRadius,
                                         pacing_cycle_length,
+                                        scar_membrane_area_scaling,  // chi scaling factor.
                                         use_neutral_cell_model,
                                         use_fibroblasts,
-                                        shape);
+                                        shape,
+                                        lesion_pacing);
 
         // Create a conductivity modifier
         ScarConductivityModifier<2> modifier(&mesh,

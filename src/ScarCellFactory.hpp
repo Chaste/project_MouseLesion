@@ -67,13 +67,17 @@ template<unsigned DIM>
 class ScarCellFactory : public AbstractCardiacCellFactory<DIM>
 {
 private:
-    boost::shared_ptr<RegularStimulus> mpStimulus;
+    boost::shared_ptr<RegularStimulus> mpLeftStimulus;
+    boost::shared_ptr<RegularStimulus> mpLesionStimulus;
     double mRegionWidth;
     double mRegionHeight;
+    double mSuctionElectrodeRadius;
     double mScarRadius;
     bool mUseFakeBathCell;
     bool mUseFibroblastModel;
     ScarShape mScarShape;
+    bool mLesionPacing;
+
     /** Initial conditions for the cell model */
     std::vector<double> mCellModelICs;
 
@@ -116,17 +120,23 @@ public:
     ScarCellFactory(const double& rRegionWidth,
                     const double& rScarRadius,
                     const double& rPeriod,
+                    const double& rScarChiScaling,
                     bool neutralCellModel,
                     bool useFibroblastModel,
-                    ScarShape shape)
+                    ScarShape shape,
+                    bool lesionPacing)
     : AbstractCardiacCellFactory<DIM>(),
-      mpStimulus(new RegularStimulus(-40000.0, 2, rPeriod, 10)),
+      mpLeftStimulus(new RegularStimulus(-40000.0, 2, rPeriod, 10)),
+      // We do a special scaling on the next line since I_stim must be scaled to have a larger/smaller effect with membrane density
+      mpLesionStimulus(new RegularStimulus(-20000.0/rScarChiScaling, 4, rPeriod, 10)),
       mRegionWidth(rRegionWidth),
       mRegionHeight(0.05), // Hardcoded from the mesh geometry.
+      mSuctionElectrodeRadius(0.015),
       mScarRadius(rScarRadius),
       mUseFakeBathCell(neutralCellModel),
       mUseFibroblastModel(useFibroblastModel),
       mScarShape(shape),
+      mLesionPacing(lesionPacing),
       mCentreOfScar(UNSIGNED_UNSET, DBL_MAX), // These are all to track sensible node locations.
       mTopOfScar(UNSIGNED_UNSET, DBL_MAX),
       mLeftOfScar(UNSIGNED_UNSET, DBL_MAX),
@@ -182,18 +192,15 @@ public:
         StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth,                0,   0.5*mRegionHeight, mBaseTissue);
 
 
-        if ( (x<0.05+1e-6)  ) // Left hand edge
-        {
-            p_cell = new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, mpStimulus);
-        }
-        else if ( ( mScarShape==CIRCLE
-                &&   (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0)
+        if ( ( mScarShape==CIRCLE
+                  && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0)
                      < mScarRadius*mScarRadius) // Central region radius 0.1cm.
-               || (mScarShape==SQUARE
+             || (mScarShape==SQUARE
                   && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) < mScarRadius*mScarRadius
                   && (y-mRegionWidth/2.0)*(y-mRegionWidth/2.0) < mScarRadius*mScarRadius)
                 )
         {
+            // We are in the lesion region
             if (mUseFakeBathCell)
             {
                 // First thing to try is a scar region that is still conductive,
@@ -215,10 +222,24 @@ public:
             {
                 p_cell = new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, this->mpZeroStimulus);
             }
+
+            if (mLesionPacing && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0)
+                    < mSuctionElectrodeRadius*mSuctionElectrodeRadius)
+            {
+                // Applies to all cell models near the centre (will also be ones in the middle if we run this in 3D).
+                p_cell->SetStimulusFunction(mpLesionStimulus);
+            }
         }
-        else
+        else // We are not in the lesion region
         {
-            p_cell = new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, this->mpZeroStimulus);
+            if (!mLesionPacing && (x<0.05+1e-6)  ) // Left hand edge
+            {
+                p_cell = new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, mpLeftStimulus);
+            }
+            else
+            {
+                p_cell = new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, this->mpZeroStimulus);
+            }
         }
 
         // If this is a mouse myocyte cell model, then we want to make the APD a bit longer to match experiment
