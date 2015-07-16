@@ -55,9 +55,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * The rest of these includes are standard Chaste files...
  */
+#include "GmshMeshReader.hpp"
 #include "MonodomainProblem.hpp"
 #include "DistributedTetrahedralMesh.hpp"
 #include "CellProperties.hpp" // For analysing APs
+
+#include "Debug.hpp"
 
 #include "PetscSetupAndFinalize.hpp"
 
@@ -226,17 +229,28 @@ public:
             sub_directory << "_LesionPacing";
         }
 
-        /**
+        /*
          * SET UP MESH
          */
         DistributedTetrahedralMesh<2,2> mesh;
-        double h=0.005;
+
+        // Mesh properties we will use in the cell factory and conductivity modifier.
         mRegionWidth = 0.5; //cm
         mScarRadius = 0.1; //cm
         mBoundaryWidth = 0.01; //cm
-        mesh.ConstructRegularSlabMesh(h, mRegionWidth, mRegionWidth);
 
-        /**
+        if (create_cut)
+        {
+            GmshMeshReader<2,2> gmsh_reader("projects/MouseLesion/test/data/meshes/2D_with_cuts.msh");
+            mesh.ConstructFromMeshReader(gmsh_reader);
+        }
+        else
+        {
+            double h=0.005;
+            mesh.ConstructRegularSlabMesh(h, mRegionWidth, mRegionWidth);
+        }
+
+        /*
          * SET STANDARD OPTIONS
          */
         HeartConfig::Instance()->SetSimulationDuration(end_time); //ms
@@ -244,7 +258,7 @@ public:
         HeartConfig::Instance()->SetOutputFilenamePrefix("results");
         HeartConfig::Instance()->SetVisualizeWithVtk(true);
 
-        /**
+        /*
          * NUMERICAL METHOD PARAMETERS
          */
         HeartConfig::Instance()->SetOdePdeAndPrintingTimeSteps(0.1, 0.1, 0.1);
@@ -259,7 +273,7 @@ public:
         HeartConfig::Instance()->SetIntracellularConductivities(Create_c_vector(intra_conductivity, intra_conductivity));
         HeartConfig::Instance()->SetExtracellularConductivities(Create_c_vector(extra_conductivity, extra_conductivity));
 
-        /**
+        /*
          * COMPLETE THE SET UP OF PROBLEM
          */
 
@@ -294,13 +308,16 @@ public:
 
         // Check that the Scar cell factory is doing the index tracking I expect.
         // These should have been calculated during the initialisation step.
-        // These were checked in Paraview for the h = 0.005 mesh.
+        // These were checked in Paraview for the h = 0.005 slab mesh.
         // If these lines fail it isn't a problem if you have intentionally
-        // changed the mesh for some reason.
-        TS_ASSERT_EQUALS(cell_factory.GetNodeIndexCentreOfScar(), 5100u);
-        TS_ASSERT_EQUALS(cell_factory.GetNodeIndexCentralTissue(), 8130u);
-        TS_ASSERT_EQUALS(cell_factory.GetNodeIndexLeftTissue(), 5070u);
-        TS_ASSERT_EQUALS(cell_factory.GetNodeIndexRightTissue(), 5130u);
+        // changed the mesh for some reason (as we have when there's a cut).
+        if (!create_cut)
+        {
+            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexCentreOfScar(), 5100u);
+            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexCentralTissue(), 8130u);
+            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexLeftTissue(), 5070u);
+            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexRightTissue(), 5130u);
+        }
 
         problem.Solve();
 

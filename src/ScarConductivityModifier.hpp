@@ -172,8 +172,9 @@ public:
             mReturnTensor /= mScarChiScaling;
             return mReturnTensor;
         }
-        else if ( mCutApplied && ((x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) < mCutWidth*mCutWidth) )
+        else if ( DIM==3u && mCutApplied && ((x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) < mCutWidth*mCutWidth) )
         {
+            // (If DIM==2 then the mesh takes care of the cut).
             // In the cut region (fresh air, not extracellular conductivity either)
             return mZeroTensor;
         }

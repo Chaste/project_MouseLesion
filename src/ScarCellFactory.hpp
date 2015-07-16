@@ -128,7 +128,8 @@ public:
     : AbstractCardiacCellFactory<DIM>(),
       mpLeftStimulus(new RegularStimulus(-40000.0, 2, rPeriod, 10)),
       // We do a special scaling on the next line since I_stim must be scaled to have a larger/smaller effect with membrane density
-      mpLesionStimulus(new RegularStimulus(-20000.0/rScarChiScaling, 4, rPeriod, 10)),
+      //mpLesionStimulus(new RegularStimulus(-20000.0/rScarChiScaling, 4, rPeriod, 10)),
+      mpLesionStimulus(new RegularStimulus(-200000.0, 4, rPeriod, 10)),
       mRegionWidth(rRegionWidth),
       mRegionHeight(0.05), // Hardcoded from the mesh geometry.
       mSuctionElectrodeRadius(0.015),
