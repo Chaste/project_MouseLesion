@@ -60,8 +60,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "DistributedTetrahedralMesh.hpp"
 #include "CellProperties.hpp" // For analysing APs
 
-#include "Debug.hpp"
-
 #include "PetscSetupAndFinalize.hpp"
 
 class TestFibroblasts : public CxxTest::TestSuite
