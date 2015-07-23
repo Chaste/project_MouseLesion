@@ -135,7 +135,12 @@ public:
     {
         c_vector<double, DIM> loc = mpMesh->GetElement(elementIndex)->CalculateCentroid();
         const double x = loc[0];
-        const double y = loc[1];
+
+        double y = 0.25; // Calculations below should still work if we model the 1d case as the central line of 2D.
+        if (DIM>=2u) // Overwrite if we are in higher dimensions.
+        {
+            y = loc[1];
+        }
 
         bool intracellular = (domainIndex==0u);
         bool inside_boundary = false;

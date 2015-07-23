@@ -128,8 +128,8 @@ public:
     : AbstractCardiacCellFactory<DIM>(),
       mpLeftStimulus(new RegularStimulus(-40000.0, 2, rPeriod, 10)),
       // We do a special scaling on the next line since I_stim must be scaled to have a larger/smaller effect with membrane density
-      //mpLesionStimulus(new RegularStimulus(-20000.0/rScarChiScaling, 4, rPeriod, 10)),
-      mpLesionStimulus(new RegularStimulus(-200000.0, 4, rPeriod, 10)),
+      mpLesionStimulus(new RegularStimulus(-10000.0*rScarChiScaling, 4, rPeriod, 10)),
+      //mpLesionStimulus(new RegularStimulus(-200000.0, 4, rPeriod, 10)),
       mRegionWidth(rRegionWidth),
       mRegionHeight(0.05), // Hardcoded from the mesh geometry.
       mSuctionElectrodeRadius(0.015),
@@ -155,15 +155,20 @@ public:
         // (NB We need a stimulus that is much smaller magnitude to stop it blowing up the cells)
         boost::shared_ptr<AbstractIvpOdeSolver> p_empty_solver;
         boost::shared_ptr<AbstractStimulusFunction> p_single_cell_stim(new RegularStimulus(-50.0, 2, rPeriod, 10));
+
         boost::shared_ptr<AbstractCvodeCell> p_cell(new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, p_single_cell_stim));
         p_cell->SetParameter("membrane_non_inactivating_steady_state_potassium_current_conductance", 0.0);
 
-        std::cout << "Running AP model to initial steady state...";
+        if (mLesionPacing)
+        {
+            p_cell->SetParameter("membrane_fast_sodium_current_conductance", 0.0);
+        }
+
+        std::cout << "Running AP model to initial steady state... ";
         SteadyStateRunner steady_runner(p_cell);
         steady_runner.RunToSteadyState();
-        std::cout << "done!" << std::endl << std::flush;
-
         CopyToStdVector(p_cell->rGetStateVariables(),mCellModelICs);
+        std::cout << "done!" << std::endl << std::flush;
     }
 
     AbstractCardiacCellInterface* CreateCardiacCellForTissueNode(Node<DIM>* pNode)
@@ -172,13 +177,19 @@ public:
         boost::shared_ptr<AbstractIvpOdeSolver> p_empty_solver;
 
         const double x = pNode->rGetLocation()[0];
-        const double y = pNode->rGetLocation()[1];
+        double y = 0.25; // Calculations should still work if we pretend this is the location in 1D (central line of 2D).
+        if (DIM>=2u)
+        {
+            y = pNode->rGetLocation()[1];
+        }
+
         double z = 0.0; // Calculations should still work if this is constant in 2D
         if (DIM==3)
         {
             z = pNode->rGetLocation()[2];
         }
 
+        // We can work these out in any dimension, even if they are only used in certain ones.
         StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mCentreOfScar);
         StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.5*mRegionWidth,       mRegionHeight, mTopOfScar);
         StoreNearestNodeInfo(pNode,x,y,z, 0.36*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mLeftOfScar);
@@ -191,7 +202,6 @@ public:
         StoreNearestNodeInfo(pNode,x,y,z, 0.2*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mLeftTissue);
         StoreNearestNodeInfo(pNode,x,y,z, 0.2*mRegionWidth, 0.5*mRegionWidth,       mRegionHeight, mTopOfLeftTissue);
         StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth,                0,   0.5*mRegionHeight, mBaseTissue);
-
 
         if ( ( mScarShape==CIRCLE
                   && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0)
@@ -252,6 +262,14 @@ public:
                 ->HasParameter("membrane_non_inactivating_steady_state_potassium_current_conductance"))
         {
             p_cell->SetParameter("membrane_non_inactivating_steady_state_potassium_current_conductance", 0.0);
+            // Use sensible steady state ICs.
+            p_cell->SetStateVariables(mCellModelICs);
+        }
+
+        if (mLesionPacing && boost::dynamic_pointer_cast<AbstractUntemplatedParameterisedSystem>(p_cell)
+                ->HasParameter("membrane_fast_sodium_current_conductance"))
+        {
+            p_cell->SetParameter("membrane_fast_sodium_current_conductance", 0.0);
             // Use sensible steady state ICs.
             p_cell->SetStateVariables(mCellModelICs);
         }

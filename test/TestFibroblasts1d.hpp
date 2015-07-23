@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef TESTFIBROBLASTSLITERATEPAPER_HPP_
-#define TESTFIBROBLASTSLITERATEPAPER_HPP_
+#ifndef TESTFIBROBLASTS1D_HPP_
+#define TESTFIBROBLASTS1D_HPP_
 
 /*
  * = Two dimensional mouse ventricle with lesion simulation =
@@ -62,20 +62,20 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "PetscSetupAndFinalize.hpp"
 
-class TestFibroblasts2d : public CxxTest::TestSuite
+class TestFibroblasts1d : public CxxTest::TestSuite
 {
 private:
-    /** Width of the 2D domain we're simulating. */
+    /** Length of the 1D domain we're simulating. */
     double mRegionWidth;
 
-    /** Radius of the scar in the centre. */
+    /** Length of the scar in the centre. */
     double mScarRadius;
 
     /** Width of the boundary region (myocytes but different conductivity) */
     double mBoundaryWidth;
 
 public:
-    void Test2dPropagation() throw (Exception)
+    void Test1dPropagation() throw (Exception)
     {
 #ifdef CHASTE_CVODE
         if (*(CommandLineArguments::Instance()->p_argc) == 1)
@@ -92,12 +92,10 @@ public:
                     " * --scar-membrane-area-scaling <x> the scaling factor for membrane area (per unit vol) in scar region\n"
                     " * --boundary-conduction-scaling <x> The proportion of intra-cellular conduction to\n"
                     "                                     apply in the boundary of the scar (still myocytes).\n"
-                    " * --scar-shape <x> Whether the scar should be a 'CIRCLE' or a 'SQUARE'\n"
                     "\n"
                     " * --pacing-period <x>  The time between paces applied on x=0 (defaults to 100ms)\n"
                     " * --end-time <x>       How long to perform the simulation for (defaults to pacing period).\n"
-                    " * --lesion-pacing      Whether to perform pacing in the centre of the lesion (default false).\n"
-            		" * --cut  Whether to introduce a cut with complete conduction block (defaults to false).\n";
+                    " * --lesion-pacing      Whether to perform pacing in the centre of the lesion (default false).\n";
             return;
         }
 
@@ -112,7 +110,7 @@ public:
         bool lesion_pacing = false; // Alternative is remote/sinus pacing.
         ScarShape shape = CIRCLE;
         double scar_membrane_area_scaling = 1.0;
-        const std::string output_folder = "FibroblastSims/";
+        const std::string output_folder = "FibroblastSims1d/";
 
         if (CommandLineArguments::Instance()->OptionExists("--pacing-period"))
         {
@@ -123,22 +121,6 @@ public:
         if (CommandLineArguments::Instance()->OptionExists("--end-time"))
         {
             end_time = CommandLineArguments::Instance()->GetDoubleCorrespondingToOption("--end-time");
-        }
-
-        if (CommandLineArguments::Instance()->OptionExists("--scar-shape"))
-        {
-            if (CommandLineArguments::Instance()->GetStringCorrespondingToOption("--scar-shape")=="CIRCLE")
-            {
-                shape = CIRCLE;
-            }
-            else if (CommandLineArguments::Instance()->GetStringCorrespondingToOption("--scar-shape")=="SQUARE")
-            {
-                shape = SQUARE;
-            }
-            else
-            {
-                EXCEPTION("The --scar-shape argument should be 'CIRCLE' or 'SQUARE'.");
-            }
         }
 
         // Here we say what proportion of the normal conductivity we want in the scar
@@ -184,12 +166,6 @@ public:
             assert(scar_membrane_area_scaling <= 1.0);
         }
 
-        bool create_cut = false;
-        if (CommandLineArguments::Instance()->OptionExists("--cut"))
-        {
-            create_cut = true;
-        }
-
         if (CommandLineArguments::Instance()->OptionExists("--lesion-pacing"))
         {
             lesion_pacing = true;
@@ -212,16 +188,6 @@ public:
 
         sub_directory << "_scar_cond_" << scaling_factor << "_cap_" << scar_membrane_area_scaling << "_boundary_cond_" << scaling_factor_boundary << "_period_" << pacing_cycle_length << "_end_" << end_time;
 
-        if (shape==SQUARE)
-        {
-            sub_directory << "_Square";
-        }
-
-        if (create_cut)
-        {
-            sub_directory << "_WithCut";
-        }
-
         if (lesion_pacing)
         {
             sub_directory << "_LesionPacing";
@@ -230,23 +196,15 @@ public:
         /*
          * SET UP MESH
          */
-        DistributedTetrahedralMesh<2,2> mesh;
+        DistributedTetrahedralMesh<1,1> mesh;
 
         // Mesh properties we will use in the cell factory and conductivity modifier.
         mRegionWidth = 0.5; //cm
         mScarRadius = 0.1; //cm
         mBoundaryWidth = 0.01; //cm
 
-        if (create_cut)
-        {
-            GmshMeshReader<2,2> gmsh_reader("projects/MouseLesion/test/data/meshes/2D_with_cuts.msh");
-            mesh.ConstructFromMeshReader(gmsh_reader);
-        }
-        else
-        {
-            double h=0.005;
-            mesh.ConstructRegularSlabMesh(h, mRegionWidth, mRegionWidth);
-        }
+        double h=0.005;
+        mesh.ConstructRegularSlabMesh(h, mRegionWidth, mRegionWidth);
 
         /*
          * SET STANDARD OPTIONS
@@ -276,18 +234,18 @@ public:
          */
 
         // Make a scar cell factory
-        ScarCellFactory<2> cell_factory(mRegionWidth,
+        ScarCellFactory<1> cell_factory(mRegionWidth,
                                         mScarRadius,
                                         pacing_cycle_length,
                                         scar_membrane_area_scaling,  // chi scaling factor.
                                         use_neutral_cell_model,
                                         use_fibroblasts,
-                                        shape,
+                                        shape, // doesn't make any difference in 1D
                                         lesion_pacing);
 
         // Create a conductivity modifier
-        ScarConductivityModifier<2> modifier(&mesh,
-                                             shape,
+        ScarConductivityModifier<1> modifier(&mesh,
+                                             shape, // doesn't make any difference in 1D
                                              mRegionWidth,
                                              mScarRadius,
                                              scaling_factor, // D scaling factor.
@@ -295,28 +253,14 @@ public:
                                              mBoundaryWidth,
                                              scaling_factor_boundary, // D scaling factor (chi not implemented for boundary yet).
                                              true, // whether a lesion applied
-                                             create_cut);
+                                             false);
 
-        MonodomainProblem<2> problem( &cell_factory );
+        MonodomainProblem<1> problem( &cell_factory );
         problem.SetMesh( &mesh );
         
         problem.SetWriteInfo(); // Writes max and min voltages out.
         problem.Initialise();
         problem.GetTissue()->SetConductivityModifier(&modifier);
-
-        // Check that the Scar cell factory is doing the index tracking I expect.
-        // These should have been calculated during the initialisation step.
-        // These were checked in Paraview for the h = 0.005 slab mesh.
-        // If these lines fail it isn't a problem if you have intentionally
-        // changed the mesh for some reason (as we have when there's a cut).
-        if (!create_cut)
-        {
-            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexCentreOfScar(), 5100u);
-            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexCentralTissue(), 8130u);
-            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexLeftTissue(), 5070u);
-            TS_ASSERT_EQUALS(cell_factory.GetNodeIndexRightTissue(), 5130u);
-        }
-
         problem.Solve();
 
         // Print out a couple of node traces to file for easy plotting.
@@ -326,13 +270,10 @@ public:
         // These methods must be called in parallel.
         std::vector<unsigned> node_indices;
         node_indices.push_back(cell_factory.GetNodeIndexCentreOfScar()); // 0
-        node_indices.push_back(cell_factory.GetNodeIndexCentralTissue()); // 1 - best "control" half way through
         node_indices.push_back(cell_factory.GetNodeIndexLeftTissue()); // 2
         node_indices.push_back(cell_factory.GetNodeIndexRightTissue()); // 3
         node_indices.push_back(cell_factory.GetNodeIndexLeftOfScar()); // 4
         node_indices.push_back(cell_factory.GetNodeIndexRightOfScar()); // 5
-        node_indices.push_back(cell_factory.GetNodeIndexSideOfScar()); // 6
-        node_indices.push_back(cell_factory.GetNodeIndexBaseOfTissue()); // 7
 
         // But we only want the master to write out the actual file.
         if (PetscTools::AmMaster())
@@ -404,4 +345,4 @@ public:
     }
 };
 
-#endif // TESTFIBROBLASTSLITERATEPAPER_HPP_
+#endif // TESTFIBROBLASTS_HPP_
