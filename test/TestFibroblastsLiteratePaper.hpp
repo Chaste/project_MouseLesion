@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2005-2015, University of Oxford.
+Copyright (c) 2005-2016, University of Oxford.
 All rights reserved.
 
 University of Oxford means the Chancellor, Masters and Scholars of the
@@ -39,7 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * = Two dimensional mouse ventricle with lesion simulation =
  *
- * This is the code that was used to perform the simulation in Mahoney ''et al.'' (2015).
+ * This is the code that was used to perform the simulation in Mahoney ''et al.'' (2016).
  *
  * == Code Walkthrough ==
  */
@@ -232,18 +232,21 @@ public:
          */
         DistributedTetrahedralMesh<2,2> mesh;
 
-        // Mesh properties we will use in the cell factory and conductivity modifier.
-        mRegionWidth = 0.5; //cm
-        mScarRadius = 0.1; //cm
-        mBoundaryWidth = 0.01; //cm
-
         if (create_cut)
         {
-            GmshMeshReader<2,2> gmsh_reader("projects/MouseLesion/test/data/meshes/2D_with_cuts.msh");
+            GmshMeshReader<2,2> gmsh_reader("projects/MouseLesion/test/data/meshes/2D_with_cuts_7_by_9_mm.msh");
             mesh.ConstructFromMeshReader(gmsh_reader);
+            // Mesh properties we will use in the cell factory and conductivity modifier.
+            mRegionWidth = 0.7; //cm
+            mScarRadius = 0.2325; //cm
+            mBoundaryWidth = 0.01; //cm
         }
         else
         {
+            // Mesh properties we will use in the cell factory and conductivity modifier.
+            mRegionWidth = 0.5; //cm
+            mScarRadius = 0.1; //cm
+            mBoundaryWidth = 0.01; //cm
             double h=0.005;
             mesh.ConstructRegularSlabMesh(h, mRegionWidth, mRegionWidth);
         }
@@ -283,7 +286,8 @@ public:
                                         use_neutral_cell_model,
                                         use_fibroblasts,
                                         shape,
-                                        lesion_pacing);
+                                        lesion_pacing,
+                                        create_cut);
 
         // Create a conductivity modifier
         ScarConductivityModifier<2> modifier(&mesh,

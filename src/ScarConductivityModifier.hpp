@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2005-2015, University of Oxford.
+Copyright (c) 2005-2016, University of Oxford.
 All rights reserved.
 
 University of Oxford means the Chancellor, Masters and Scholars of the
@@ -77,6 +77,8 @@ private:
     bool mCutApplied;
     /** The width of the cut */
     double mCutWidth;
+    /** Height of the domain we're simulating. */
+    double mRegionHeight;
 
 public:
     /**
@@ -118,6 +120,18 @@ public:
     {
         assert(pMesh != NULL);
         mZeroTensor = zero_matrix<double>(DIM,DIM);
+
+        // Default is square
+        mRegionHeight = mRegionWidth;
+
+        if (mCutApplied)
+        {
+            if (DIM==2u)
+            {
+                mRegionWidth = 0.7;  //cm hardcoded from 2D_with_cuts_7_by_9_mm.msh
+                mRegionHeight = 0.9; //cm hardcoded from 2D_with_cuts_7_by_9_mm.msh
+            }
+        }
     }
 
     /**
@@ -151,7 +165,7 @@ public:
         {
             if (mShape==CIRCLE)
             {
-                double distance_from_origin_squared = (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0)+(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0);
+                double distance_from_origin_squared = (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0)+(y-mRegionHeight/2.0)*(y-mRegionHeight/2.0);
                 inside_boundary = (distance_from_origin_squared < (mScarRadius+mBoundaryWidth)*(mScarRadius+mBoundaryWidth));
                 inside_scar = (distance_from_origin_squared < mScarRadius*mScarRadius);
             }
@@ -159,7 +173,7 @@ public:
             {
                 assert(mShape==SQUARE);
                 double x_distance_from_origin_squared = (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0);
-                double y_distance_from_origin_squared = (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0);
+                double y_distance_from_origin_squared = (y-mRegionHeight/2.0)*(y-mRegionHeight/2.0);
                 inside_boundary = ((x_distance_from_origin_squared < (mScarRadius+mBoundaryWidth)*(mScarRadius+mBoundaryWidth)) &&
                                    (y_distance_from_origin_squared < (mScarRadius+mBoundaryWidth)*(mScarRadius+mBoundaryWidth))   );
                 inside_scar = ((x_distance_from_origin_squared < mScarRadius*mScarRadius) &&

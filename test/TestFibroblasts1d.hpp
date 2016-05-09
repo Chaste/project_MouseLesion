@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2005-2015, University of Oxford.
+Copyright (c) 2005-2016, University of Oxford.
 All rights reserved.
 
 University of Oxford means the Chancellor, Masters and Scholars of the
@@ -241,7 +241,8 @@ public:
                                         use_neutral_cell_model,
                                         use_fibroblasts,
                                         shape, // doesn't make any difference in 1D
-                                        lesion_pacing);
+                                        lesion_pacing,
+                                        false); // Cut doesn't make sense in 1D
 
         // Create a conductivity modifier
         ScarConductivityModifier<1> modifier(&mesh,

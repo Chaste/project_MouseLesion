@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2005-2015, University of Oxford.
+Copyright (c) 2005-2016, University of Oxford.
 All rights reserved.
 
 University of Oxford means the Chancellor, Masters and Scholars of the
@@ -69,14 +69,16 @@ class ScarCellFactory : public AbstractCardiacCellFactory<DIM>
 private:
     boost::shared_ptr<RegularStimulus> mpLeftStimulus;
     boost::shared_ptr<RegularStimulus> mpLesionStimulus;
-    double mRegionWidth;
-    double mRegionHeight;
     double mSuctionElectrodeRadius;
     double mScarRadius;
     bool mUseFakeBathCell;
     bool mUseFibroblastModel;
     ScarShape mScarShape;
     bool mLesionPacing;
+    bool mCreateCut;
+    double mRegionWidth;
+    double mRegionHeight;
+    double mRegionDepth;
 
     /** Initial conditions for the cell model */
     std::vector<double> mCellModelICs;
@@ -124,20 +126,20 @@ public:
                     bool neutralCellModel,
                     bool useFibroblastModel,
                     ScarShape shape,
-                    bool lesionPacing)
+                    bool lesionPacing,
+                    bool createCut)
     : AbstractCardiacCellFactory<DIM>(),
       mpLeftStimulus(new RegularStimulus(-40000.0, 2, rPeriod, 10)),
       // We do a special scaling on the next line since I_stim must be scaled to have a larger/smaller effect with membrane density
       mpLesionStimulus(new RegularStimulus(-10000.0*rScarChiScaling, 4, rPeriod, 10)),
       //mpLesionStimulus(new RegularStimulus(-200000.0, 4, rPeriod, 10)),
-      mRegionWidth(rRegionWidth),
-      mRegionHeight(0.05), // Hardcoded from the mesh geometry.
       mSuctionElectrodeRadius(0.015),
       mScarRadius(rScarRadius),
       mUseFakeBathCell(neutralCellModel),
       mUseFibroblastModel(useFibroblastModel),
       mScarShape(shape),
       mLesionPacing(lesionPacing),
+      mCreateCut(createCut),
       mCentreOfScar(UNSIGNED_UNSET, DBL_MAX), // These are all to track sensible node locations.
       mTopOfScar(UNSIGNED_UNSET, DBL_MAX),
       mLeftOfScar(UNSIGNED_UNSET, DBL_MAX),
@@ -169,6 +171,18 @@ public:
         steady_runner.RunToSteadyState();
         CopyToStdVector(p_cell->rGetStateVariables(),mCellModelICs);
         std::cout << "done!" << std::endl << std::flush;
+
+        if (mCreateCut)
+        {
+            mRegionWidth = 0.7;  // Hardcoded from the mesh geometry in 2D_with_cuts_7_by_9_mm.msh.
+            mRegionHeight = 0.9; // Hardcoded from the mesh geometry in 2D_with_cuts_7_by_9_mm.msh.
+        }
+        else
+        {
+            mRegionWidth = rRegionWidth;
+            mRegionHeight = rRegionWidth; // Square so same width as height.
+        }
+        mRegionDepth = 0.05; // Hardcoded from the mesh geometry, only really used in 3D.
     }
 
     AbstractCardiacCellInterface* CreateCardiacCellForTissueNode(Node<DIM>* pNode)
@@ -190,25 +204,25 @@ public:
         }
 
         // We can work these out in any dimension, even if they are only used in certain ones.
-        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mCentreOfScar);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.5*mRegionWidth,       mRegionHeight, mTopOfScar);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.36*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mLeftOfScar);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.64*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mRightOfScar);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.36*mRegionWidth,   0.5*mRegionHeight, mSideOfScar);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.8*mRegionWidth,   0.5*mRegionHeight, mCentralTissue);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.8*mRegionWidth,       mRegionHeight, mTopOfCentralTissue);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.8*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mRightTissue);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.8*mRegionWidth, 0.5*mRegionWidth,       mRegionHeight, mTopOfRightTissue);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.2*mRegionWidth, 0.5*mRegionWidth,   0.5*mRegionHeight, mLeftTissue);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.2*mRegionWidth, 0.5*mRegionWidth,       mRegionHeight, mTopOfLeftTissue);
-        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth,                0,   0.5*mRegionHeight, mBaseTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.5*mRegionHeight,   0.5*mRegionDepth, mCentreOfScar);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.5*mRegionHeight,       mRegionDepth, mTopOfScar);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.36*mRegionWidth, 0.5*mRegionHeight,   0.5*mRegionDepth, mLeftOfScar);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.64*mRegionWidth, 0.5*mRegionHeight,   0.5*mRegionDepth, mRightOfScar);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.36*mRegionHeight,   0.5*mRegionDepth, mSideOfScar);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.8*mRegionHeight,   0.5*mRegionDepth, mCentralTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth, 0.8*mRegionHeight,       mRegionDepth, mTopOfCentralTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.8*mRegionWidth, 0.5*mRegionHeight,   0.5*mRegionDepth, mRightTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.8*mRegionWidth, 0.5*mRegionHeight,       mRegionDepth, mTopOfRightTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.2*mRegionWidth, 0.5*mRegionHeight,   0.5*mRegionDepth, mLeftTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.2*mRegionWidth, 0.5*mRegionHeight,       mRegionDepth, mTopOfLeftTissue);
+        StoreNearestNodeInfo(pNode,x,y,z, 0.5*mRegionWidth,                0,   0.5*mRegionDepth, mBaseTissue);
 
         if ( ( mScarShape==CIRCLE
-                  && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0)
+                  && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionHeight/2.0)*(y-mRegionHeight/2.0)
                      < mScarRadius*mScarRadius) // Central region radius 0.1cm.
              || (mScarShape==SQUARE
                   && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) < mScarRadius*mScarRadius
-                  && (y-mRegionWidth/2.0)*(y-mRegionWidth/2.0) < mScarRadius*mScarRadius)
+                  && (y-mRegionHeight/2.0)*(y-mRegionHeight/2.0) < mScarRadius*mScarRadius)
                 )
         {
             // We are in the lesion region
@@ -228,13 +242,24 @@ public:
                 p_cell = new Cellsachse_moreno_abildskov_2008_bFromCellMLCvode(p_empty_solver, this->mpZeroStimulus);
                 // Give it a sensible starting voltage too.
                 p_cell->SetVoltage(-80);
+
+                const double scaling_factor = 10.0;
+
+                const double leak_conductance = p_cell->GetParameter("membrane_leakage_current_conductance");
+                p_cell->SetParameter("membrane_leakage_current_conductance",leak_conductance*scaling_factor);
+
+                const double iK1_conductance = p_cell->GetParameter("membrane_inward_rectifier_potassium_current_conductance");
+                p_cell->SetParameter("membrane_inward_rectifier_potassium_current_conductance",iK1_conductance*scaling_factor);
+
+                const double shaker_conductance = p_cell->GetParameter("membrane_delayed_rectifier_potassium_current_conductance");
+                p_cell->SetParameter("membrane_delayed_rectifier_potassium_current_conductance",shaker_conductance*scaling_factor);
             }
             else
             {
                 p_cell = new Cellli_mouse_2010FromCellMLCvode(p_empty_solver, this->mpZeroStimulus);
             }
 
-            if (mLesionPacing && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionWidth/2.0)*(y-mRegionWidth/2.0)
+            if (mLesionPacing && (x-mRegionWidth/2.0)*(x-mRegionWidth/2.0) +(y-mRegionHeight/2.0)*(y-mRegionHeight/2.0)
                     < mSuctionElectrodeRadius*mSuctionElectrodeRadius)
             {
                 // Applies to all cell models near the centre (will also be ones in the middle if we run this in 3D).
@@ -266,6 +291,8 @@ public:
             p_cell->SetStateVariables(mCellModelICs);
         }
 
+        // If we are doing a current injection experiment there is Flecainide present to block fast sodium
+        // and prevent activation waves - i.e. we mostly see diffusion of voltage and can see space constant.
         if (mLesionPacing && boost::dynamic_pointer_cast<AbstractUntemplatedParameterisedSystem>(p_cell)
                 ->HasParameter("membrane_fast_sodium_current_conductance"))
         {
