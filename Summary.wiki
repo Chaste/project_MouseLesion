@@ -18,13 +18,7 @@ For manual installation of each dependency, on any version of Linux, see Develop
 The simulations featured in the paper supplement are explained and annotated below.
 For further information on using Chaste to solve these and related problems, see our [wiki:ChasteGuides extensive guide material].
 
-== Mouse Lesion study ==
-
-The steps required to reproduce the study are:
- 1. Run a simulation of a 2D lesion, with varying command line parameters ([wiki:./Fibroblasts C++ file for performing simulation])
- 1. Run a simulation of a 3D lesion, with varying command line parameters ([wiki:./Fibroblasts3d C++ file for performing simulation])
-  
-== Sample commands to install and run everything ==
+== Sample commands to install Chaste ==
 
 If you wish to install Chaste direct from our repository, you may do so from the command line as follows:
 {{{
@@ -35,11 +29,20 @@ cd <path to Chaste source>/projects
 (replacing "`<path to Chaste source>`" with the filepath to where you have installed Chaste). 
 Now unzip the downloaded `MouseLesion.tar.gz` into this folder.
 
-To run the simulations, use:
+== Code compilation ==
+
+To compile the simulators, use:
 {{{
 #!sh
 cd <path to Chaste source>
 scons chaste_libs=1 brief=1 build=GccOptNative projects/MouseLesion
 }}}
 
-To run simulations for the parameters and results shown in the paper, use the script `run_lesion_simulations.sh` and then (when they have finished) `collate_lesion_results.sh`, followed by the matlab script `test/data/processing_scripts/process_APs_capacitance.m`.
+== Mouse Lesion study ==
+
+The steps required to reproduce the study are:
+ 1. Run a simulation of a 2D lesion, with varying command line parameters ([wiki:./Fibroblasts C++ file for performing simulation])
+ 1. Run a simulation of a 3D lesion, with varying command line parameters ([wiki:./Fibroblasts3d C++ file for performing simulation])
+  
+To vary parameters and run simulations for the results shown in the paper, use the script `run_lesion_simulations.sh` and then (when they have finished) `collate_lesion_results.sh`, 
+followed by the matlab script `test/data/processing_scripts/process_APs_capacitance.m` to do the post-processing.
