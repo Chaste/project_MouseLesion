@@ -55,12 +55,11 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 /*
  * The rest of these includes are standard Chaste files...
  */
-#include "MonodomainProblem.hpp"
-#include "DistributedTetrahedralMesh.hpp"
 #include "CellProperties.hpp" // For analysing APs
+#include "DistributedTetrahedralMesh.hpp"
+#include "MonodomainProblem.hpp"
 
 #include "PetscSetupAndFinalize.hpp"
-
 
 class TestFibroblasts3d : public CxxTest::TestSuite
 {
@@ -78,30 +77,30 @@ private:
     double mBoundaryWidth;
 
 public:
-    void Test3dPropagation() throw (Exception)
+    void Test3dPropagation() throw(Exception)
     {
 #ifdef CHASTE_CVODE
         if (*(CommandLineArguments::Instance()->p_argc) == 1)
         {
             std::cout << "TestFibroblasts3d takes the following arguments:\n"
-                    " Mandatory:\n"
-                    " * --scar-conduction-scaling <x> The proportion of the intra-cellular conduction to\n"
-                    "                                 apply in the central scar region.\n"
-                    "\n"
-                    " Optional:\n"
-                    " * --boundary-conduction-scaling <x> The proportion of intra-cellular conduction to\n"
-                                       "                  apply in the boundary of the scar (myocytes).\n"
-                    " * --use-neutral-cells <true or false>  Whether to use neutral cells OR,\n"
-                    " * --use-fibroblasts <true or false>    a fibroblast electrophysiology model,\n"
-                    "                                        in the scar region.\n"
-                    " * --scar-membrane-area-scaling <x> the scaling factor for membrane area (per unit vol) in scar region\n"
-                    "\n"
-                    " * --scar-thickness  0.05 / 0.04 / 0.03 / 0.02 / <0.01> thickness of scar in um.\n"
-                    " * --high-res-mesh  Use a higher resolution mesh (for production runs).\n"
-                    "\n"
-                    " * --pacing-period <x>  The time between paces applied on x=0 (defaults to 100ms)\n"
-                    " * --end-time <x>       How long to perform the simulation for (defaults to pacing period).\n"
-            		" * --cut  Whether to introduce a cut with complete conduction block (defaults to false).\n";
+                         " Mandatory:\n"
+                         " * --scar-conduction-scaling <x> The proportion of the intra-cellular conduction to\n"
+                         "                                 apply in the central scar region.\n"
+                         "\n"
+                         " Optional:\n"
+                         " * --boundary-conduction-scaling <x> The proportion of intra-cellular conduction to\n"
+                         "                  apply in the boundary of the scar (myocytes).\n"
+                         " * --use-neutral-cells <true or false>  Whether to use neutral cells OR,\n"
+                         " * --use-fibroblasts <true or false>    a fibroblast electrophysiology model,\n"
+                         "                                        in the scar region.\n"
+                         " * --scar-membrane-area-scaling <x> the scaling factor for membrane area (per unit vol) in scar region\n"
+                         "\n"
+                         " * --scar-thickness  0.05 / 0.04 / 0.03 / 0.02 / <0.01> thickness of scar in um.\n"
+                         " * --high-res-mesh  Use a higher resolution mesh (for production runs).\n"
+                         "\n"
+                         " * --pacing-period <x>  The time between paces applied on x=0 (defaults to 100ms)\n"
+                         " * --end-time <x>       How long to perform the simulation for (defaults to pacing period).\n"
+                         " * --cut  Whether to introduce a cut with complete conduction block (defaults to false).\n";
             return;
         }
 
@@ -124,7 +123,7 @@ public:
         // THESE ARE HARDCODED FROM THE MESH GENERATION
         mRegionWidth = 0.5;
         mScarRadius = 0.1;
-        mBoundaryWidth = 0.05 - mScarThickness/2.0;
+        mBoundaryWidth = 0.05 - mScarThickness / 2.0;
 
         if (CommandLineArguments::Instance()->OptionExists("--scar-thickness"))
         {
@@ -232,9 +231,11 @@ public:
         /*
          * SET UP MESH
          */
-        TrianglesMeshReader<3,3> mesh_reader("projects/GaryM/test/data/meshes/scar_thickness_" + scar_thickness_string + mesh_resolution);
-        DistributedTetrahedralMesh<3,3> mesh;
+        TrianglesMeshReader<3, 3> mesh_reader("projects/MouseLesion/test/data/meshes/scar_thickness_" + scar_thickness_string + mesh_resolution);
+        DistributedTetrahedralMesh<3, 3> mesh;
         mesh.ConstructFromMeshReader(mesh_reader);
+
+        std::cout << "Number of nodes in mesh = " << mesh.GetNumAllNodes() << std::endl;
 
         /*
          * SET STANDARD OPTIONS
@@ -267,7 +268,7 @@ public:
         ScarCellFactory<3> cell_factory(mRegionWidth,
                                         mScarRadius,
                                         pacing_cycle_length,
-                                        scar_membrane_area_scaling,  // chi scaling factor.
+                                        scar_membrane_area_scaling, // chi scaling factor.
                                         use_neutral_cell_model,
                                         use_fibroblasts,
                                         shape,
@@ -286,13 +287,12 @@ public:
                                              true, // whether a lesion applied
                                              create_cut);
 
-        MonodomainProblem<3> problem( &cell_factory );
-        problem.SetMesh( &mesh );
+        MonodomainProblem<3> problem(&cell_factory);
+        problem.SetMesh(&mesh);
 
         problem.SetWriteInfo(); // Writes max and min voltages out.
         problem.Initialise();
         problem.GetTissue()->SetConductivityModifier(&modifier);
-
 
         problem.Solve();
 
@@ -324,7 +324,7 @@ public:
 
             // Retrieve the voltage traces at nodes of interest
             std::vector<std::vector<double> > voltage_traces;
-            for (unsigned i=0; i<node_indices.size(); i++)
+            for (unsigned i = 0; i < node_indices.size(); i++)
             {
                 voltage_traces.push_back(reader.GetVariableOverTime("V", node_indices[i]));
             }
@@ -332,13 +332,13 @@ public:
             // Output the full voltage traces at these nodes
             std::vector<double> times = reader.GetUnlimitedDimensionValues();
             out_stream output_file = handler.OpenOutputFile("voltage_traces_at_selected_nodes.dat");
-            
-            for (unsigned i=0; i<times.size(); i++)
+
+            for (unsigned i = 0; i < times.size(); i++)
             {
                 *output_file << times[i];
-                for (unsigned j=0; j<node_indices.size(); j++)
+                for (unsigned j = 0; j < node_indices.size(); j++)
                 {
-                    *output_file << "\t" << voltage_traces[j][i] ;
+                    *output_file << "\t" << voltage_traces[j][i];
                 }
                 *output_file << "\n";
             }
@@ -348,7 +348,7 @@ public:
             output_file = handler.OpenOutputFile("action_potential_properties_at_selected_nodes.dat");
             *output_file << "Node\tAPD90(ms)\tAPD70(ms)\tAPD50(ms)\tMaxUpstroke(mV/ms)\tPeakVoltage(mV)\tAmplitude(mV)\tResting(mV)" << std::endl;
             const double voltage_AP_threshold = -70.0;
-            for (unsigned i=0; i<node_indices.size(); i++)
+            for (unsigned i = 0; i < node_indices.size(); i++)
             {
                 CellProperties voltage_properties(voltage_traces[i], times, voltage_AP_threshold);
                 double apd90, apd70, apd50, upstroke, peak, amplitude, resting;
@@ -363,7 +363,7 @@ public:
                     resting = voltage_properties.GetRestingPotentials().back();
                 }
                 catch (Exception& e)
-                {   // In case there is no action potential at all.
+                { // In case there is no action potential at all.
                     apd90 = 0.0;
                     apd70 = 0.0;
                     apd50 = 0.0;
@@ -381,7 +381,7 @@ public:
 
 #else
         std::cout << "CVODE is not installed, or CHASTE is not configured to use it, check your hostconfig settings." << std::endl;
-        // TS_ASSERT(false); // uncomment if you want to ensure CVODE is set up on your system.
+// TS_ASSERT(false); // uncomment if you want to ensure CVODE is set up on your system.
 #endif // CHASTE_CVODE
     }
 };
